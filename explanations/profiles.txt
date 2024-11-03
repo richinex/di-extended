@@ -1,0 +1,104 @@
+// pkg/container/profile.go
+package container
+
+// Profile represents a configuration profile for the container
+type Profile struct {
+    Name    string  // Profile identifier
+    Active  bool    // Whether profile is currently active
+    Parent  string  // Parent profile name for inheritance
+    Default bool    // Whether this is the default profile
+}
+
+// ProfileManager handles profile management and activation
+type ProfileManager struct {
+    profiles map[string]*Profile  // Map of available profiles
+    active   []string            // List of currently active profiles
+}
+
+// Condition defines an interface for conditional bean creation/activation
+type Condition interface {
+    // Matches checks if the condition is satisfied for the given container
+    Matches(container *Container) bool
+}
+
+// ProfileCondition implements Condition for profile-based conditions
+type ProfileCondition struct {
+    ProfileName string  // Profile name to check for
+}
+
+// Matches checks if a specific profile is active
+func (pc *ProfileCondition) Matches(container *Container) bool {
+    return container.IsProfileActive(pc.ProfileName)
+}
+
+// Example profiles for different environments
+func setupProfiles() *ProfileManager {
+    pm := &ProfileManager{
+        profiles: make(map[string]*Profile),
+        active:   make([]string, 0),
+    }
+
+    // Define profiles
+    pm.profiles["development"] = &Profile{
+        Name:    "development",
+        Active:  true,
+        Default: true,
+    }
+
+    pm.profiles["production"] = &Profile{
+        Name:   "production",
+        Active: false,
+    }
+
+    return pm
+}
+
+// Example conditional bean creation
+type DatabaseConfig struct {
+    URL string
+}
+
+// Create different configs based on profile
+func createDatabaseConfig(container *Container) interface{} {
+    prodCondition := &ProfileCondition{ProfileName: "production"}
+
+    if prodCondition.Matches(container) {
+        return &DatabaseConfig{URL: "prod-db:5432"}
+    }
+    return &DatabaseConfig{URL: "localhost:5432"}
+}
+
+Common use cases:
+
+Lifecycle Management:
+
+Database connection initialization/cleanup
+Cache warming
+Resource allocation/deallocation
+Service registration/deregistration
+
+
+Profile Management:
+
+Environment-specific configuration
+Feature toggles
+Testing configurations
+Deployment variants
+
+
+Conditional Beans:
+
+Environment-specific implementations
+Feature-flagged components
+Testing alternatives
+Optional dependencies
+
+
+
+This implementation provides:
+
+Structured lifecycle management
+Environment-aware configuration
+Conditional component creation
+Clean separation of concerns
+Flexible runtime behavior

@@ -1,0 +1,219 @@
+Dependency Injection container. Here are the key components:
+
+Container Structure:
+
+goCopytype Container struct {
+    mu              sync.RWMutex              // Thread safety
+    services        map[string]*ScopedService // Stores services with their scopes
+    log             *zap.SugaredLogger        // Logging
+    lifecycleManager *LifecycleManager        // Manages service lifecycles
+    profileManager   *ProfileManager          // Manages environment profiles
+    aspectManager    *aop.AspectManager       // Handles aspect-oriented programming
+    parent          *Container                // Hierarchical DI support
+}
+
+Key Features:
+
+a) Service Registration:
+goCopyfunc (c *Container) Register(qualifier string, service interface{}, scope Scope) error {
+    // Registers a service with specific scope (Singleton/Prototype)
+    // Handles lifecycle hooks (PostConstruct) for Singletons
+    // Validates service registration
+}
+b) Service Resolution:
+goCopyfunc (c *Container) Resolve(qualifier string) (interface{}, error) {
+    // Resolves services based on their scope:
+    // - Singleton: Returns same instance
+    // - Prototype: Creates new instance
+    // - Supports hierarchical lookup (parent containers)
+}
+c) Dependency Injection:
+goCopyfunc (c *Container) InjectStruct(target interface{}) error {
+    // Injects dependencies into struct fields marked with "di" tags
+    // Handles required vs optional dependencies
+    // Performs type compatibility checks
+    // Executes lifecycle hooks after injection
+}
+
+Advanced Features:
+
+a) Profile Management:
+goCopyfunc (c *Container) SetActiveProfiles(profiles ...string)
+func (c *Container) IsProfileActive(profileName string) bool
+
+Manages different environment profiles (dev, prod, etc.)
+Conditional bean creation based on profiles
+
+b) Aspect-Oriented Programming:
+goCopyfunc (c *Container) AddAspect(aspect aop.Aspect)
+func (c *Container) ExecuteAspects(jp *aop.JoinPoint) error
+
+Supports cross-cutting concerns (logging, metrics, etc.)
+Different aspect types (Before, After, Around, etc.)
+
+c) Lifecycle Management:
+goCopyfunc (c *Container) Cleanup() error {
+    // Executes PreDestroy hooks
+    // Cleans up resources
+    // Handles graceful shutdown
+}
+
+Usage Example:
+
+goCopy// Create container
+container := NewContainer()
+
+// Register service
+container.Register("userService", NewUserService(), Singleton)
+
+// Inject dependencies
+injectable := &MyStruct{}
+container.InjectStruct(injectable)
+
+// Use profiles
+container.SetActiveProfiles("dev", "local")
+
+// Add aspects
+container.AddAspect(loggingAspect)
+
+// Cleanup
+defer container.Cleanup()
+
+Key Benefits:
+
+
+Thread-safe operations
+Multiple scopes support (Singleton/Prototype)
+Lifecycle management
+Profile-based configuration
+Aspect-oriented programming
+Hierarchical DI
+Comprehensive logging
+Error handling
+Resource cleanup
+
+This container provides a full-featured dependency injection framework similar to Spring in Java, supporting:
+
+Dependency management
+Scope handling
+Lifecycle hooks
+Profile-based configuration
+Aspect-oriented programming
+Resource cleanup
+Hierarchical containers
+
+The implementation is thread-safe and provides extensive logging for debugging and monitoring.
+
+Imagine you're playing with LEGO blocks:
+
+The Container (Like a LEGO Box)
+
+goCopytype Container struct {
+    services map[string]*ScopedService  // Like shelves in your LEGO box
+    // ... other stuff
+}
+
+It's like a special box where you keep all your toys (services)
+Each toy has a name tag (qualifier) so you can find it easily
+
+
+Registration (Putting Toys in the Box)
+
+goCopyfunc (c *Container) Register(qualifier string, service interface{}, scope Scope)
+This is like:
+
+"Hey box, here's my toy car 🚗"
+"Please put it on the shelf called 'carService'"
+"And remember if it's a sharing toy (Singleton) or personal toy (Prototype)"
+
+
+Resolving (Getting Toys Out)
+
+goCopyfunc (c *Container) Resolve(qualifier string)
+This is like:
+
+"Box, can I have my toy car please?"
+The box looks for "carService" and gives you your car
+
+
+Injection (Connecting Toys)
+
+goCopyfunc (c *Container) InjectStruct(target interface{})
+Like when you're building a LEGO set:
+
+You have instructions that say "put the red block here"
+The container reads these instructions (di tags)
+It puts the right pieces (services) in the right spots
+
+
+Real Example:
+
+goCopy// Create toy box
+container := NewContainer()
+
+// Put toys in box
+container.Register("car", NewToyCar(), Singleton)      // Sharing toy
+container.Register("blocks", NewBlocks(), Prototype)   // Personal toy
+
+// Build something with the toys
+myToys := &ToySet{}
+container.InjectStruct(myToys)  // Container helps put toys together
+
+Special Features:
+
+a) Scopes (Toy Rules):
+
+Singleton: Like a sharing toy everyone uses
+Prototype: Like personal toys - each kid gets their own
+
+b) Profiles (Play Modes):
+goCopycontainer.SetActiveProfiles("indoor", "rainy-day")
+
+Like having different rules for playing inside vs outside
+
+c) Aspects (Play Supervisors):
+goCopycontainer.AddAspect(safetyChecker)
+
+Like having a grown-up watch how toys are being used
+Makes sure toys are used safely
+
+
+Cleanup (Tidying Up):
+
+goCopycontainer.Cleanup()
+
+Like when mom says "time to put your toys away!"
+Makes sure everything goes back in its place
+
+In Real Terms:
+
+Instead of toys, we're managing things like:
+
+Database connections 💾
+User services 👥
+Email senders ✉️
+
+
+The container makes sure:
+
+Everything is organized
+Things are connected properly
+Resources are used correctly
+Cleanup happens when we're done
+
+
+
+It's like having a really smart toy box that:
+
+Knows where everything is
+Helps put things together
+Makes sure toys are shared properly
+Helps clean up when you're done
+Makes sure everything is used safely
+
+And just like having a responsible adult supervise playtime, it:
+
+Keeps track of everything (logging)
+Prevents fights over toys (thread safety)
+Makes sure toys are used correctly (type safety)
+Helps clean up messes (resource management)

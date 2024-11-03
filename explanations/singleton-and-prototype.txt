@@ -1,0 +1,155 @@
+Let me explain the difference between Singleton and Prototype scopes with clear examples:
+Singleton:
+
+Only ONE instance is created and REUSED for all requests
+Perfect for stateless services or shared resources
+
+goCopy// Singleton Example
+type DatabaseConnection struct {
+    connection string
+    counter    int  // To demonstrate shared state
+}
+
+func (d *DatabaseConnection) IncrementCounter() int {
+    d.counter++
+    return d.counter
+}
+
+// In main:
+di.Register("dbConnection", &DatabaseConnection{connection: "mysql://..."}, container.Singleton)
+
+// Usage:
+// Every time you resolve "dbConnection", you get THE SAME instance
+conn1, _ := di.Resolve("dbConnection")  // Gets instance, counter = 0
+conn1.(*DatabaseConnection).IncrementCounter()  // counter = 1
+conn2, _ := di.Resolve("dbConnection")  // Gets SAME instance, counter = 1
+conn2.(*DatabaseConnection).IncrementCounter()  // counter = 2
+Prototype:
+
+NEW instance created for EACH request
+Perfect for stateful services or when you need independent instances
+
+goCopy// Prototype Example
+type UserSession struct {
+    userID string
+    counter int
+}
+
+func (u *UserSession) IncrementCounter() int {
+    u.counter++
+    return u.counter
+}
+
+// In main:
+di.Register("userSession", &UserSession{}, container.Prototype)
+
+// Usage:
+// Every time you resolve "userSession", you get a NEW instance
+session1, _ := di.Resolve("userSession")  // Gets new instance, counter = 0
+session1.(*UserSession).IncrementCounter()  // counter = 1
+session2, _ := di.Resolve("userSession")  // Gets DIFFERENT instance, counter = 0
+session2.(*UserSession).IncrementCounter()  // counter = 1 (separate counter)
+Here's a complete example showing both:
+goCopypackage main
+
+import (
+    "di-extended/pkg/container"
+    "fmt"
+)
+
+// Service with state (counter)
+type CounterService struct {
+    count int
+}
+
+func (c *CounterService) Increment() int {
+    c.count++
+    return c.count
+}
+
+func main() {
+    di := container.NewContainer()
+
+    // Register same service with different scopes
+    di.Register("singletonCounter", &CounterService{}, container.Singleton)
+    di.Register("prototypeCounter", &CounterService{}, container.Prototype)
+
+    // Test Singleton
+    fmt.Println("Testing Singleton:")
+    singleton1, _ := di.Resolve("singletonCounter")
+    singleton2, _ := di.Resolve("singletonCounter")
+
+    s1 := singleton1.(*CounterService)
+    s2 := singleton2.(*CounterService)
+
+    fmt.Printf("Singleton1 count: %d\n", s1.Increment()) // Output: 1
+    fmt.Printf("Singleton2 count: %d\n", s2.Increment()) // Output: 2 (shared state!)
+
+    // Test Prototype
+    fmt.Println("\nTesting Prototype:")
+    prototype1, _ := di.Resolve("prototypeCounter")
+    prototype2, _ := di.Resolve("prototypeCounter")
+
+    p1 := prototype1.(*CounterService)
+    p2 := prototype2.(*CounterService)
+
+    fmt.Printf("Prototype1 count: %d\n", p1.Increment()) // Output: 1
+    fmt.Printf("Prototype2 count: %d\n", p2.Increment()) // Output: 1 (independent state!)
+}
+When to use which:
+Use Singleton for:
+
+Database connections
+Configuration services
+Caching services
+Logging services
+Any stateless service
+
+goCopy// Good Singleton candidates
+di.Register("dbConnection", NewDatabaseConnection(), container.Singleton)
+di.Register("configService", NewConfigService(), container.Singleton)
+di.Register("cacheService", NewCacheService(), container.Singleton)
+Use Prototype for:
+
+User sessions
+Request contexts
+Temporary data holders
+Any stateful service
+
+goCopy// Good Prototype candidates
+di.Register("userSession", NewUserSession(), container.Prototype)
+di.Register("requestContext", NewRequestContext(), container.Prototype)
+di.Register("dataProcessor", NewDataProcessor(), container.Prototype)
+Key Differences:
+
+Memory Usage:
+
+Singleton: One instance
+Prototype: Multiple instances
+
+
+State Management:
+
+Singleton: Shared state
+Prototype: Independent state
+
+
+Performance:
+
+Singleton: Better (reuses instance)
+Prototype: More overhead (creates new instances)
+
+
+Thread Safety:
+
+Singleton: Need to handle concurrency
+Prototype: Naturally thread-safe (separate instances)
+
+
+
+Choose based on your needs:
+
+Need shared state? → Singleton
+Need independent state? → Prototype
+Need resource efficiency? → Singleton
+Need isolation? → Prototype

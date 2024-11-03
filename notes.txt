@@ -1,0 +1,75 @@
+go mod init di-extended
+go run main.go
+
+Expected output will be something like:
+
+=== Struct Inspection Results ===
+Struct: Injectable
+Fields:
+  - UserService:
+    Type: interface {}
+    Exported: true
+    Tags:
+      di: userService
+    Value: &{USER-}
+  - EmailService:
+    Type: interface {}
+    Exported: true
+    Tags:
+      di: emailService
+    Value: &{smtp.example.com}
+  - ConfigService:
+    Type: interface {}
+    Exported: true
+    Tags:
+      di: configService
+    Value: &{development}
+
+=== Testing Injected Services ===
+UserService result: USER-123
+Sending email to test@example.com via smtp.example.com: Hello from DI!
+ConfigService result: Environment: development
+
+
+The whole process demonstrates:
+
+Dependency Inversion: Services are created and registered independently
+Inversion of Control: Container manages service lifecycle
+Dependency Injection: Services are automatically injected where needed
+Reflection: Used to analyze and modify structs at runtime
+Loose Coupling: Services are referenced by interface, not concrete type
+
+This is a classic example of the Dependency Injection pattern, where:
+
+Services are defined by interfaces
+Implementations are created separately
+A container manages the dependencies
+Injection happens automatically based on tags
+Everything is loosely coupled and easily testable
+
+
+The key reflection methods used:
+
+reflect.ValueOf(x)     // Gets runtime value information
+reflect.TypeOf(x)      // Gets type information
+value.Kind()           // Gets kind (Ptr, Struct, Interface, etc.)
+value.Elem()           // Dereferences pointer
+type.NumField()        // Gets number of struct fields
+type.Field(i)          // Gets field info by index
+value.Field(i)         // Gets field value by index
+field.Tag             // Gets field tags
+field.PkgPath         // Empty for exported fields
+value.CanInterface()  // Checks if value can be accessed
+value.Interface()     // Gets actual value
+
+go test -v ./...
+
+# Run all tests
+go test -v ./...
+
+# Run specific package tests
+go test -v ./internal/services
+go test -v .
+
+# Run with coverage
+go test -v -cover ./...
